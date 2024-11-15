@@ -2,6 +2,8 @@ const express = require('express');
 
 const app = express();
 
+const PERSONS_ROUTE = '/api/persons';
+
 let persons = [
   {
     id: '1',
@@ -25,15 +27,17 @@ let persons = [
   },
 ];
 
+app.use(express.json());
+
 app.get('/', (req, res) => {
   res.send('<h1>Hello World!</h1>');
 });
 
-app.get('/api/persons', (req, res) => {
+app.get(PERSONS_ROUTE, (req, res) => {
   res.status(200).json(persons);
 });
 
-app.delete('/api/persons/:id', (req, res) => {
+app.delete(`${PERSONS_ROUTE}/:id`, (req, res) => {
   const personId = req.params.id;
 
   persons = persons.filter(({ id }) => id !== personId);
@@ -41,13 +45,25 @@ app.delete('/api/persons/:id', (req, res) => {
   res.status(204).end();
 });
 
-app.get('/api/persons/:id', (req, res) => {
+app.get(`${PERSONS_ROUTE}/:id`, (req, res) => {
   const personId = req.params.id;
 
   const person = persons.find(({ id }) => id === personId);
 
   if (person) res.status(200).json(person);
   else res.status(404).send("Person wasn't found");
+});
+
+app.post(PERSONS_ROUTE, (req, res) => {
+  const newPerson = req.body;
+
+  if (!newPerson.name || !newPerson.number) res.code(400).end();
+
+  const newPersonId = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER) + (persons.length + 1);
+
+  persons = [...persons, { id: newPersonId, ...req.body }];
+
+  res.status(200).json(persons);
 });
 
 app.get('/api/info', (req, res) => {
