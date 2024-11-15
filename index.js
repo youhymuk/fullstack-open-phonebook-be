@@ -51,13 +51,24 @@ app.get(`${PERSONS_ROUTE}/:id`, (req, res) => {
   const person = persons.find(({ id }) => id === personId);
 
   if (person) res.status(200).json(person);
-  else res.status(404).send("Person wasn't found");
+  else res.status(404).json({ error: "Person wasn't found" });
 });
 
 app.post(PERSONS_ROUTE, (req, res) => {
   const newPerson = req.body;
 
-  if (!newPerson.name || !newPerson.number) res.code(400).end();
+  const isPersonAlreadyExist = persons.findIndex(({ name }) => name === newPerson.name) !== -1;
+  const isBadRequest = !newPerson.name || !newPerson.number || isPersonAlreadyExist;
+
+  console.log(isPersonAlreadyExist, isBadRequest);
+
+  if (isBadRequest) {
+    const error = isPersonAlreadyExist ? 'Name must be unique' : 'All fields are required';
+
+    res.status(400).json({ error });
+
+    return;
+  }
 
   const newPersonId = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER) + (persons.length + 1);
 
