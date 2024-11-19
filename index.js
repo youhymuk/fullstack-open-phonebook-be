@@ -28,7 +28,9 @@ let persons = [
   },
 ];
 
-app.use(express.json(), morgan('tiny'));
+morgan.token('body', (req) => (req.method === 'POST' ? JSON.stringify(req.body) : ''));
+
+app.use(express.json(), morgan(':method :url :status :res[content-length] - :response-time ms :body'));
 
 app.get('/', (req, res) => {
   res.send('<h1>Hello World!</h1>');
@@ -60,8 +62,6 @@ app.post(PERSONS_ROUTE, (req, res) => {
 
   const isPersonAlreadyExist = persons.findIndex(({ name }) => name === newPerson.name) !== -1;
   const isBadRequest = !newPerson.name || !newPerson.number || isPersonAlreadyExist;
-
-  console.log(isPersonAlreadyExist, isBadRequest);
 
   if (isBadRequest) {
     const error = isPersonAlreadyExist ? 'Name must be unique' : 'All fields are required';
