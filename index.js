@@ -1,5 +1,6 @@
 const express = require('express');
 const morgan = require('morgan');
+const cors = require('cors');
 
 const app = express();
 
@@ -30,11 +31,7 @@ let persons = [
 
 morgan.token('body', (req) => (req.method === 'POST' ? JSON.stringify(req.body) : ''));
 
-app.use(express.json(), morgan(':method :url :status :res[content-length] - :response-time ms :body'));
-
-app.get('/', (req, res) => {
-  res.send('<h1>Hello World!</h1>');
-});
+app.use(express.json(), morgan(':method :url :status :res[content-length] - :response-time ms :body'), cors());
 
 app.get(PERSONS_ROUTE, (req, res) => {
   res.status(200).json(persons);
@@ -82,7 +79,7 @@ app.get('/api/info', (req, res) => {
   res.status(200).send(`<p>Phonebook has info for ${persons.length} people</p><p>${new Date()}</p>`);
 });
 
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT);
 
 console.log(`Server is running in port ${PORT}`);
