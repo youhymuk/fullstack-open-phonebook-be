@@ -31,7 +31,12 @@ let persons = [
 
 morgan.token('body', (req) => (req.method === 'POST' ? JSON.stringify(req.body) : ''));
 
-app.use(express.json(), morgan(':method :url :status :res[content-length] - :response-time ms :body'), cors());
+app.use(
+  express.json(),
+  morgan(':method :url :status :res[content-length] - :response-time ms :body'),
+  cors(),
+  express.static('dist'),
+);
 
 app.get(PERSONS_ROUTE, (req, res) => {
   res.status(200).json(persons);

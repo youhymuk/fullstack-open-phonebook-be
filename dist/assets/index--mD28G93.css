@@ -1,0 +1,1 @@
+*{box-sizing:border-box}.flash-message{position:absolute;top:5px;left:5px;right:5px;padding:5px;width:calc(100% - 10px);min-height:40px;display:flex;align-items:center;border:1px solid transparent;border-radius:10px}.flash-message.error{border-color:red;background-color:red}.flash-message.success{border-color:green;background-color:green}
