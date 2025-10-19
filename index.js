@@ -1,90 +1,81 @@
+require('dotenv').config();
 const express = require('express');
 const morgan = require('morgan');
 const cors = require('cors');
 
+const Contact = require('./modules/contact.js');
+
 const app = express();
 
-const PERSONS_ROUTE = '/api/persons';
+const CONTACTS_ROUTE = '/api/contacts';
 
-let persons = [
-  {
-    id: '1',
-    name: 'Arto Hellas',
-    number: '040-123456',
-  },
-  {
-    id: '2',
-    name: 'Ada Lovelace',
-    number: '39-44-5323523',
-  },
-  {
-    id: '3',
-    name: 'Dan Abramov',
-    number: '12-43-234345',
-  },
-  {
-    id: '4',
-    name: 'Mary Poppendieck',
-    number: '39-23-6423122',
-  },
-];
-
-morgan.token('body', (req) => (req.method === 'POST' ? JSON.stringify(req.body) : ''));
-
-app.use(
-  express.json(),
-  morgan(':method :url :status :res[content-length] - :response-time ms :body'),
-  cors(),
-  express.static('dist'),
+morgan.token('body', (req) =>
+	req.method === 'POST' ? JSON.stringify(req.body) : ''
 );
 
-app.get(PERSONS_ROUTE, (req, res) => {
-  res.status(200).json(persons);
+app.use(
+	express.json(),
+	morgan(':method :url :status :res[content-length] - :response-time ms :body'),
+	cors(),
+	express.static('dist')
+);
+
+app.get(CONTACTS_ROUTE, (req, res) => {
+	Contact.find({}).then((contacts) => {
+		res.status(200).json(contacts);
+	});
 });
 
-app.delete(`${PERSONS_ROUTE}/:id`, (req, res) => {
-  const personId = req.params.id;
+app.delete(`${CONTACTS_ROUTE}/:id`, (req, res) => {
+	const contactId = req.params.id;
 
-  persons = persons.filter(({ id }) => id !== personId);
-
-  res.status(204).end();
+	Contact.findByIdAndDelete(contactId).then(() => {
+		res.status(204).end();
+	});
 });
 
-app.get(`${PERSONS_ROUTE}/:id`, (req, res) => {
-  const personId = req.params.id;
+app.get(`${CONTACTS_ROUTE}/:id`, (req, res) => {
+	const contactId = req.params.id;
 
-  const person = persons.find(({ id }) => id === personId);
-
-  if (person) res.status(200).json(person);
-  else res.status(404).json({ error: "Person wasn't found" });
+	Contact.findById(contactId)
+		.then((contact) => {
+			res.status(200).json(contact);
+		})
+		.catch(() => res.status(404).end());
 });
 
-app.post(PERSONS_ROUTE, (req, res) => {
-  const newPerson = req.body;
+app.post(CONTACTS_ROUTE, async (req, res) => {
+	const newContact = req.body;
 
-  const isPersonAlreadyExist = persons.findIndex(({ name }) => name === newPerson.name) !== -1;
-  const isBadRequest = !newPerson.name || !newPerson.number || isPersonAlreadyExist;
+	const isBadRequest = !newContact.name || !newContact.number;
+	const isPersonAlreadyExist = await Contact.find({
+		name: newContact.name,
+	}).then((contacts) => !!contacts.length);
 
-  if (isBadRequest) {
-    const error = isPersonAlreadyExist ? 'Name must be unique' : 'All fields are required';
+	if (isBadRequest || isPersonAlreadyExist) {
+		const error = isPersonAlreadyExist
+			? 'Name must be unique'
+			: 'All fields are required';
 
-    res.status(400).json({ error });
+		return res.status(400).json({ error });
+	}
 
-    return;
-  }
-
-  const newPersonId = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER) + (persons.length + 1);
-
-  persons = [...persons, { id: newPersonId, ...req.body }];
-
-  res.status(200).json(persons);
+	new Contact(newContact).save().then((savedContact) => {
+		res.status(201).json(savedContact);
+	});
 });
 
 app.get('/api/info', (req, res) => {
-  res.status(200).send(`<p>Phonebook has info for ${persons.length} people</p><p>${new Date()}</p>`);
+	res
+		.status(200)
+		.send(
+			`<p>Phonebook has info for ${
+				persons.length
+			} people</p><p>${new Date()}</p>`
+		);
 });
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT;
 app.listen(PORT);
 
 console.log(`Server is running in port ${PORT}`);
