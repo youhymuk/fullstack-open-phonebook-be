@@ -9,6 +9,7 @@ const Contact = require('./modules/contact.js');
 const app = express();
 
 const CONTACTS_ROUTE = '/api/contacts';
+const INFO_ROUTE = '/api/info';
 
 morgan.token('body', (req) =>
 	req.method === 'POST' ? JSON.stringify(req.body) : ''
@@ -81,14 +82,15 @@ app.post(CONTACTS_ROUTE, async (req, res, next) => {
 	});
 });
 
-app.get('/api/info', (req, res) => {
+app.get(INFO_ROUTE, (req, res, next) => {
+	Contact.find({}).then((contacts) =>
 	res
 		.status(200)
 		.send(
 			`<p>Phonebook has info for ${
-				persons.length
+				contacts.length
 			} people</p><p>${new Date()}</p>`
-		);
+		)).catch((error) => next(error));
 });
 
 app.use(errorHandler);
