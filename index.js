@@ -3,6 +3,7 @@ const express = require('express');
 const morgan = require('morgan');
 const cors = require('cors');
 
+const errorHandler = require('./middlewares/errorHandler.js');
 const Contact = require('./modules/contact.js');
 
 const app = express();
@@ -21,7 +22,7 @@ app.use(morgan(':method :url :status :res[content-length] - :response-time ms :b
 app.get(CONTACTS_ROUTE, (req, res, next) => {
 	Contact.find({}).then((contacts) => {
 		res.status(200).json(contacts);
-	}).catch(error => next(error));
+	}).catch((error) => next(error));
 });
 
 app.delete(`${CONTACTS_ROUTE}/:id`, (req, res, next) => {
@@ -31,8 +32,7 @@ app.delete(`${CONTACTS_ROUTE}/:id`, (req, res, next) => {
 		.then((deletedDoc) => {
 			console.log(deletedDoc)
 			return deletedDoc ? res.status(204).end() : res.status(404).end();
-		})
-		.catch((error) => next(error));
+		}).catch((error) => next(error));
 });
 
 app.get(`${CONTACTS_ROUTE}/:id`, (req, res, next) => {
@@ -41,8 +41,7 @@ app.get(`${CONTACTS_ROUTE}/:id`, (req, res, next) => {
 	Contact.findById(contactId)
 		.then((contact) => {
 			return contact ? res.status(200).json(contact) : res.status(404).end();
-		})
-		.catch((err) => next(err));
+		}).catch((error) => next(error));
 });
 
 app.post(CONTACTS_ROUTE, async (req, res, next) => {
@@ -63,7 +62,7 @@ app.post(CONTACTS_ROUTE, async (req, res, next) => {
 
 	new Contact(newContact).save().then((savedContact) => {
 		res.status(201).json(savedContact);
-	}).catch((err) => next(err));
+	});
 });
 
 app.get('/api/info', (req, res) => {
@@ -75,6 +74,8 @@ app.get('/api/info', (req, res) => {
 			} people</p><p>${new Date()}</p>`
 		);
 });
+
+app.use(errorHandler);
 
 const PORT = process.env.PORT;
 app.listen(PORT);
