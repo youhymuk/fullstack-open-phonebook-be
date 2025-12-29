@@ -13,38 +13,39 @@ morgan.token('body', (req) =>
 	req.method === 'POST' ? JSON.stringify(req.body) : ''
 );
 
-app.use(
-	express.json(),
-	morgan(':method :url :status :res[content-length] - :response-time ms :body'),
-	cors(),
-	express.static('dist')
-);
+app.use(cors());
+app.use(express.static('dist'));
+app.use(express.json());
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'));
 
-app.get(CONTACTS_ROUTE, (req, res) => {
+app.get(CONTACTS_ROUTE, (req, res, next) => {
 	Contact.find({}).then((contacts) => {
 		res.status(200).json(contacts);
-	});
+	}).catch(error => next(error));
 });
 
-app.delete(`${CONTACTS_ROUTE}/:id`, (req, res) => {
+app.delete(`${CONTACTS_ROUTE}/:id`, (req, res, next) => {
 	const contactId = req.params.id;
 
-	Contact.findByIdAndDelete(contactId).then(() => {
-		res.status(204).end();
-	});
+	Contact.findByIdAndDelete(contactId)
+		.then((deletedDoc) => {
+			console.log(deletedDoc)
+			return deletedDoc ? res.status(204).end() : res.status(404).end();
+		})
+		.catch((error) => next(error));
 });
 
-app.get(`${CONTACTS_ROUTE}/:id`, (req, res) => {
+app.get(`${CONTACTS_ROUTE}/:id`, (req, res, next) => {
 	const contactId = req.params.id;
 
 	Contact.findById(contactId)
 		.then((contact) => {
-			res.status(200).json(contact);
+			return contact ? res.status(200).json(contact) : res.status(404).end();
 		})
-		.catch(() => res.status(404).end());
+		.catch((err) => next(err));
 });
 
-app.post(CONTACTS_ROUTE, async (req, res) => {
+app.post(CONTACTS_ROUTE, async (req, res, next) => {
 	const newContact = req.body;
 
 	const isBadRequest = !newContact.name || !newContact.number;
@@ -62,7 +63,7 @@ app.post(CONTACTS_ROUTE, async (req, res) => {
 
 	new Contact(newContact).save().then((savedContact) => {
 		res.status(201).json(savedContact);
-	});
+	}).catch((err) => next(err));
 });
 
 app.get('/api/info', (req, res) => {
