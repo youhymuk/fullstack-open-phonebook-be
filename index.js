@@ -44,6 +44,22 @@ app.get(`${CONTACTS_ROUTE}/:id`, (req, res, next) => {
 		}).catch((error) => next(error));
 });
 
+app.put(`${CONTACTS_ROUTE}/:id`, (req, res, next) => {
+	const contactId = req.params.id;
+	const { number: newNumber } = req.body;
+
+	Contact.findById(contactId).then((contact) => {
+		if (!contact) {
+			return res.status(404).end();
+		}
+
+		contact.number = newNumber;
+		contact.save().then((updatedContact) => {
+			res.status(200).json(updatedContact);
+		});
+	}).catch((error) => next(error));
+});
+
 app.post(CONTACTS_ROUTE, async (req, res, next) => {
 	const newContact = req.body;
 
